@@ -1,157 +1,106 @@
-# 👀 Mimo Eyes & Air Quality Monitor — Dual Arduino Animated Display System
+# Air Quality Monitor with Real-Time Clock
 
-A dual-microcontroller project using **Arduino Nano** as a sensor node and **Arduino Uno** as an animated **TFT display controller** — showing real-time clock, temperature, humidity, and air quality with an animated character interface.
+A dual-Arduino environmental monitor that displays temperature, humidity, air quality, and current time across three screens on a TFT display.
 
----
-
-## 🎯 What It Does
-
-- Displays an animated **"Mimo Eyes"** character on a TFT screen with multiple expressions
-- Shows **real-time clock** (DS3231 RTC), **temperature & humidity** (DHT11), and **air quality** (MQ135) data
-- Navigate between screens using **gesture-based menu**
-- Plays a **boot animation** on startup with smooth screen transitions
+Built this to have a small desktop device showing actual room conditions at a glance — not just serial monitor output, but a proper screen you can look at and immediately understand.
 
 ---
 
-## 🧰 Components Used
+## How it works
 
-| Component | Purpose |
+Two Arduinos are used, each with a separate job.
+
+**Arduino Nano** reads from all sensors and sends data to the Uno over serial communication.
+
+**Arduino Uno** receives that data and handles everything on the display — it drives the TFT screen and manages the three screens.
+
+Splitting the work keeps the display smooth and the sensor reading reliable.
+
+---
+
+## Screens
+
+| Screen | What it shows |
 |---|---|
-| Arduino Nano | Sensor node — reads all sensor data |
-| Arduino Uno | Display controller — handles TFT & animations |
-| TFT Display (ILI9341 / ST7735) | Main screen output |
-| DS3231 RTC Module | Real-time clock (accurate timekeeping) |
-| DHT11 Sensor | Temperature & Humidity reading |
-| MQ135 Gas Sensor | Air quality / CO2 level monitoring |
-| Jumper Wires | Connections between components |
-| Breadboard | Prototyping |
+| Clock | Current time and date from DS3231 RTC |
+| Temperature | Live temperature (C) and humidity (%) from DHT11 |
+| Air Quality | MQ135 reading with status indicator |
 
 ---
 
-## ⚙️ How It Works
+## Components
 
-```
-[ Arduino Nano ]                [ Arduino Uno ]
-   DHT11 Sensor       →            TFT Display
-   MQ135 Sensor       →         Mimo Eyes Animation
-   DS3231 RTC         →         Screen Navigation
-   (Sensor Node)              (Display Controller)
-```
-
-- **Arduino Nano** reads sensor values and passes data to **Arduino Uno** via Serial communication
-- **Arduino Uno** processes the data and renders it on the **TFT display**
-- User navigates between 3 screens using gesture/button input
-
----
-
-## 📺 Screens
-
-### Screen 1 — 🕐 Clock
-- Shows current time and date from DS3231 RTC
-- Mimo Eyes displayed alongside
-
-### Screen 2 — 🌡️ Temperature & Humidity
-- Live temperature (°C) and humidity (%) from DHT11
-- Mimo Eyes reacts based on temperature (happy/sad expression)
-
-### Screen 3 — 💨 Air Quality
-- Real-time air quality index from MQ135 sensor
-- Shows Good / Moderate / Poor level
-- Mimo Eyes reacts with worried expression on bad air quality
-
----
-
-## 😄 Mimo Eyes Expressions
-
-| Expression | Trigger |
+| Part | Purpose |
 |---|---|
-| 😊 Happy | Normal temperature & good air |
-| 😴 Sleepy | Idle / no interaction |
-| 😠 Angry | High temperature detected |
-| 😟 Worried | Poor air quality |
-| 😉 Wink | Boot animation |
-| 😐 Blink | Default idle blink loop |
+| Arduino Nano | Sensor node |
+| Arduino Uno | Display controller |
+| TFT Display (ST7735 / ILI9341) | Output screen |
+| DS3231 RTC Module | Real-time clock with battery backup |
+| DHT11 | Temperature and humidity sensor |
+| MQ135 | Air quality sensor |
 
 ---
 
-## 🔌 Pin Connections
+## Pin Connections
 
-### Arduino Nano (Sensor Node)
-| Sensor | Pin |
+### Arduino Nano
+
+| Component | Pin |
 |---|---|
-| DHT11 Data | D2 |
-| MQ135 Analog Out | A0 |
+| DHT11 data | D2 |
+| MQ135 analog out | A0 |
 | DS3231 SDA | A4 |
 | DS3231 SCL | A5 |
-| Serial TX to Uno | D1 (TX) |
+| TX to Uno | D1 |
 
-### Arduino Uno (Display Controller)
-| Module | Pin |
+### Arduino Uno
+
+| Component | Pin |
 |---|---|
 | TFT CS | D10 |
 | TFT DC | D9 |
 | TFT RST | D8 |
 | TFT MOSI | D11 |
 | TFT SCK | D13 |
-| Serial RX from Nano | D0 (RX) |
+| RX from Nano | D0 |
 
 ---
 
-## 📚 Libraries Required
-
-Install these from Arduino IDE → Library Manager:
+## Libraries
 
 ```
-- Adafruit GFX Library
-- Adafruit ST7735 / ILI9341 (based on your TFT)
-- DHT sensor library (Adafruit)
-- RTClib (Adafruit)
-- MQ135 Library
+Adafruit GFX Library
+Adafruit ST7735 or ILI9341
+DHT sensor library by Adafruit
+RTClib by Adafruit
 ```
 
 ---
 
-## 🚀 How to Run
+## How to run
 
-1. Clone or download this repository
-2. Open Arduino IDE
-3. Install all required libraries (listed above)
-4. Open `nano_sensor_node.ino` → Upload to **Arduino Nano**
-5. Open `uno_display_controller.ino` → Upload to **Arduino Uno**
-6. Connect components as per pin diagram above
-7. Power on — boot animation plays, then main screen loads!
+1. Install all libraries from Arduino IDE Library Manager
+2. Open `nano_sensor.ino` and upload to Arduino Nano
+3. Open `uno_display.ino` and upload to Arduino Uno
+4. Connect components as per pin diagram above
+5. Power on — clock screen loads by default
 
 ---
 
-## 📁 File Structure
+## File structure
 
 ```
-mimo-eyes-arduino/
-│
-├── nano_sensor_node/
-│   └── nano_sensor_node.ino       # Sensor reading code for Nano
-│
-├── uno_display_controller/
-│   └── uno_display_controller.ino # TFT display & animation code for Uno
-│
-└── README.md
+air-quality-monitor-arduino/
+|
+|-- nano_sensor/
+|   |-- nano_sensor.ino
+|
+|-- uno_display/
+|   |-- uno_display.ino
+|
+|-- README.md
 ```
 
 ---
 
-## 🌟 Features
-
-- ✅ Dual microcontroller architecture
-- ✅ Animated character with 6 expressions
-- ✅ Real-time sensor data display
-- ✅ Gesture-based screen navigation
-- ✅ Boot animation on startup
-- ✅ Smooth screen transitions
-
----
-
-## 👨‍💻 Made By
-
-**Sai Santosh Chavan**
-B.Sc. IT Student | Mumbai
-
+Built by [Sai Chavan](https://github.com/sai0336)
