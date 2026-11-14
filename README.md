@@ -1,106 +1,77 @@
-# Air Quality Monitor with Real-Time Clock
+# Air Quality Display with Real-Time Clock
 
-A dual-Arduino environmental monitor that displays temperature, humidity, air quality, and current time across three screens on a TFT display.
+A two-Arduino environmental display using an **Arduino Nano** as the sensor/RTC node and an **Arduino Uno** driving a parallel TFT shield. The project shows a clock, temperature/humidity, and an experimental MQ135-based gas-sensor visualization.
 
-Built this to have a small desktop device showing actual room conditions at a glance — not just serial monitor output, but a proper screen you can look at and immediately understand.
+> **Important measurement limitation:** The MQ135 produces **one analog reading** in this sketch. The Uno firmware derives six example values labelled CO2, CO, NH3, NO2, BENZ and SMOK by scaling that **same raw ADC value**. Those numbers are **not independent gas measurements or calibrated ppm values**. The displayed `SAFE`, `HIGH`, `GOOD`, etc. labels are illustrative thresholds, **not validated air-safety assessments**. Do not use this display to make health or safety decisions.
 
----
+## Architecture
 
-## How it works
-
-Two Arduinos are used, each with a separate job.
-
-**Arduino Nano** reads from all sensors and sends data to the Uno over serial communication.
-
-**Arduino Uno** receives that data and handles everything on the display — it drives the TFT screen and manages the three screens.
-
-Splitting the work keeps the display smooth and the sensor reading reliable.
-
----
+- **Nano:** Reads DS3231 RTC via I2C, DHT11 temperature and humidity, and MQ135 analog output. It sends a comma-separated serial packet to the Uno once per second at 9600 baud. It also reads an active-low button/contact input and controls a buzzer.
+- **Uno:** Parses the serial packets and renders three screens on a **MCUFRIEND-compatible parallel TFT shield**.
 
 ## Screens
 
-| Screen | What it shows |
-|---|---|
-| Clock | Current time and date from DS3231 RTC |
-| Temperature | Live temperature (C) and humidity (%) from DHT11 |
-| Air Quality | MQ135 reading with status indicator |
+| Screen | Source |
+| --- | --- |
+| Clock | DS3231 time/date from Nano |
+| Air visualization | MQ135 raw analog input; Uno uses illustrative scaling, not measured gas ppm |
+| Temperature & humidity | DHT11 readings |
 
----
+## Hardware and connections
 
-## Components
+### Arduino Nano — sensor node
 
-| Part | Purpose |
-|---|---|
-| Arduino Nano | Sensor node |
-| Arduino Uno | Display controller |
-| TFT Display (ST7735 / ILI9341) | Output screen |
-| DS3231 RTC Module | Real-time clock with battery backup |
-| DHT11 | Temperature and humidity sensor |
-| MQ135 | Air quality sensor |
-
----
-
-## Pin Connections
-
-### Arduino Nano
-
-| Component | Pin |
-|---|---|
+| Device | Arduino Nano |
+| --- | --- |
 | DHT11 data | D2 |
-| MQ135 analog out | A0 |
+| MQ135 analog output | A0 |
 | DS3231 SDA | A4 |
 | DS3231 SCL | A5 |
-| TX to Uno | D1 |
+| Buzzer drive | D3 |
+| Button/contact input (active LOW) | D4 |
+| TX to Uno RX | D1 (TX) → Uno D0 (RX) |
+| Ground | Shared GND with Uno |
 
-### Arduino Uno
+Power sensor modules according to their individual specifications. Check the MQ135 module voltage, warm-up and calibration requirements before interpreting its reading.
 
-| Component | Pin |
-|---|---|
-| TFT CS | D10 |
-| TFT DC | D9 |
-| TFT RST | D8 |
-| TFT MOSI | D11 |
-| TFT SCK | D13 |
-| RX from Nano | D0 |
+### Arduino Uno — display node
 
----
+- The sketch uses **`MCUFRIEND_kbv` and `Adafruit_GFX`**, intended for a compatible **parallel TFT shield** that plugs directly onto the Uno.
+- It is **not** written for an SPI ST7735 display. The older README's SPI CS/DC/MOSI/SCK wiring table was incorrect for this sketch.
+- Uno D0 (RX) receives Nano D1 (TX) at 9600 baud; connect grounds together.
+- Disconnect or isolate the external serial link if it interferes with uploading sketches to the Uno. Avoid simultaneously driving a serial line from multiple devices.
 
-## Libraries
+## Arduino libraries
 
-```
-Adafruit GFX Library
-Adafruit ST7735 or ILI9341
-DHT sensor library by Adafruit
-RTClib by Adafruit
-```
+- **Nano sketch:** `DHT sensor library` (plus any required Adafruit dependencies); `Wire` comes with Arduino.
+- **Uno sketch:** `Adafruit GFX Library` and `MCUFRIEND_kbv`.
 
----
+The DS3231 is read directly over `Wire`, so **RTClib is not required** by these sketches.
 
-## How to run
+## Upload procedure
 
-1. Install all libraries from Arduino IDE Library Manager
-2. Open `nano_sensor.ino` and upload to Arduino Nano
-3. Open `uno_display.ino` and upload to Arduino Uno
-4. Connect components as per pin diagram above
-5. Power on — clock screen loads by default
+1. Open `nano_sensor/nano_sensor.ino` in Arduino IDE; select **Arduino Nano** and the matching processor/port.
+2. Install the DHT library and upload the Nano sketch.
+3. Open `uno_display/uno_display.ino`; select **Arduino Uno**.
+4. Install `Adafruit GFX` and `MCUFRIEND_kbv` and upload the Uno sketch.
+5. Fit the compatible parallel TFT shield and connect Nano TX to Uno RX with shared ground.
+6. Power the boards correctly and verify the clock, temperature/humidity, serial updates and button actions.
 
----
+To initialize the RTC if needed, the Nano source has a commented `setRTC(...)` example. Set the correct time once and comment it again after uploading.
 
-## File structure
+## Repository layout
 
-```
+```text
 air-quality-monitor-arduino/
-|
-|-- nano_sensor/
-|   |-- nano_sensor.ino
-|
-|-- uno_display/
-|   |-- uno_display.ino
-|
-|-- README.md
+├── nano_sensor/
+│   └── nano_sensor.ino
+├── uno_display/
+│   └── uno_display.ino
+└── README.md
 ```
 
----
+## Verification status
 
-Built by [Sai Chavan](https://github.com/sai0336)
+This repository cleanup **does not change** either sketch's program logic or confirm that it compiles/runs on your exact boards and TFT controller. The air-screen numbers remain illustrative until the measurement design is corrected and independently calibrated.
+
+Built by [Sai Chavan](https://github.com/sai0336).
